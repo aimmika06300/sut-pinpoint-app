@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-export default function HomeScreen({ onNavigateToMap, onOpenClassroom, searchQuery, setSearchQuery, onGoToProfile }) {
+export default function HomeScreen({ onNavigateToMap, onOpenClassroom, onOpenAllClassrooms, searchQuery, setSearchQuery, onGoToProfile }) {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       {/* Header Profile Card */}
@@ -44,7 +44,7 @@ export default function HomeScreen({ onNavigateToMap, onOpenClassroom, searchQue
       {/* Navigation Links */}
       <View style={styles.otherContainer}>
         <Text style={styles.sectionTitle}>Other & Navigation</Text>
-        
+
         <View style={styles.menuCard}>
           <View style={styles.iconCircle}><Ionicons name="location" size={24} color="#5C4033" /></View>
           <View style={styles.cardContent}>
@@ -59,6 +59,16 @@ export default function HomeScreen({ onNavigateToMap, onOpenClassroom, searchQue
           <View style={styles.iconCircle}><MaterialCommunityIcons name="door-open" size={24} color="#5C4033" /></View>
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>All classrooms</Text>
+            <TouchableOpacity style={styles.actionButton} onPress={onOpenAllClassrooms}>
+              <Text style={styles.actionButtonText}>View</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.menuCard}>
+          <View style={styles.iconCircle}><Ionicons name="book" size={24} color="#5C4033" /></View>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle}>Your class room</Text>
             <TouchableOpacity style={styles.actionButton} onPress={onOpenClassroom}>
               <Text style={styles.actionButtonText}>View</Text>
             </TouchableOpacity>

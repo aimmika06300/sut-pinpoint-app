@@ -12,6 +12,7 @@ import NotificationScreen from './screens/NotificationScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import UserDetailScreen from './screens/UserDetailScreen';
 import LoginScreen from './screens/LoginScreen';
+import AllClassroomsScreen from './screens/AllClassroomsScreen';
 
 // Import Mock Data
 import { INITIAL_PROFILE, INITIAL_NOTIFICATIONS } from './data/mockData';
@@ -46,6 +47,7 @@ function MainTabs({ navigation }) {
           <HomeScreen
             onNavigateToMap={navigateToMap}
             onOpenClassroom={() => setActiveTab('Classroom')}
+            onOpenAllClassrooms={() => navigation.navigate('AllClassrooms')}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             onGoToProfile={() => setActiveTab('Profile')}
@@ -150,6 +152,9 @@ export default function App() {
         
         {/* หน้า Login */}
         <Stack.Screen name="Login" component={LoginScreen} />
+
+        {/* หน้าห้องเรียนทั้งหมด (อาคาร > ชั้น > ห้อง) */}
+        <Stack.Screen name="AllClassrooms" component={AllClassroomsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
