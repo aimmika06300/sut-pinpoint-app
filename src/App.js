@@ -19,6 +19,19 @@ import { INITIAL_PROFILE, INITIAL_NOTIFICATIONS } from './data/mockData';
 
 const Stack = createNativeStackNavigator();
 
+// ข้อมูลตารางเรียนเริ่มต้น (ย้ายมาไว้ที่นี่เพื่อให้ไม่หายเวลาสลับแท็บ)
+const INITIAL_SCHEDULE = [
+  {
+    id: '1',
+    dayIndex: 4,
+    code: '523351',
+    name: 'WEB APPLICATION DEV',
+    time: '13:00 - 16:00 น.',
+    building: 'อาคารเครื่องมือ 1 (F1)',
+    room: 'F01-202',
+  },
+];
+
 // คอมโพเนนต์รวมสำหรับหน้าหลักพร้อม Bottom Navigation
 function MainTabs({ navigation, route }) {
   const [activeTab, setActiveTab] = useState('Home');
@@ -27,9 +40,13 @@ function MainTabs({ navigation, route }) {
   // App States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [selectedDayIndex, setSelectedDayIndex] = useState(1);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(4);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+
+  // ✅ ย้าย scheduleList ขึ้นมาไว้ตรงนี้ (ระดับเดียวกับ notifications)
+  // เพื่อไม่ให้ข้อมูลหายเวลาสลับ tab ไปมา (เพราะ ClassroomScreen ถูก unmount/remount ทุกครั้งที่เปลี่ยนแท็บ)
+  const [scheduleList, setScheduleList] = useState(INITIAL_SCHEDULE);
   
   // ให้ profile มี setter เพื่ออัปเดตข้อมูลผู้ใช้ที่ล็อกอินเข้ามา
   const [profile, setProfile] = useState(INITIAL_PROFILE);
@@ -52,6 +69,11 @@ function MainTabs({ navigation, route }) {
     setSearchQuery(buildingName || '');
   };
 
+  // ✅ ฟังก์ชันกลางสำหรับเพิ่มการแจ้งเตือน ใช้ได้จากทุกหน้าจอลูก
+  const addNotification = (notif) => {
+    setNotifications((prev) => [notif, ...prev]);
+  };
+
   const renderScreen = () => {
     switch (activeTab) {
       case 'Home':
@@ -69,9 +91,12 @@ function MainTabs({ navigation, route }) {
       case 'Classroom':
         return (
           <ClassroomScreen
+            scheduleList={scheduleList}
+            setScheduleList={setScheduleList}
             selectedDayIndex={selectedDayIndex}
             setSelectedDayIndex={setSelectedDayIndex}
             onNavigateToMap={navigateToMap}
+            onAddNotification={addNotification}
           />
         );
 
