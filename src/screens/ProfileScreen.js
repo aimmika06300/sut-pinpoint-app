@@ -1,17 +1,30 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen({
-  navigation, // 🟢 เพิ่มการรับ prop navigation ตรงนี้
+  navigation,
   profile,
-  isLoggedIn = false,
   onLogin,
   notificationsEnabled,
   setNotificationsEnabled,
   onGoToUserDetail,
   onGoToTimetable,
 }) {
+  // ดึงค่าสถานะล็อกอินจาก profile โดยตรง
+  const isLoggedIn = profile?.isLoggedIn || false;
+
+  const handleLogout = () => {
+    Alert.alert('ออกจากระบบ', 'คุณต้องการออกจากระบบหรือไม่?', [
+      { text: 'ยกเลิก', style: 'cancel' },
+      {
+        text: 'ออกจากระบบ',
+        style: 'destructive',
+        onPress: () => navigation.replace('Login'),
+      },
+    ]);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <Text style={styles.profileScreenTitle}>Profile</Text>
@@ -27,7 +40,7 @@ export default function ProfileScreen({
             {isLoggedIn ? profile?.name : 'ผู้ใช้งานทั่วไป'}
           </Text>
           <Text style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-            {isLoggedIn ? profile?.studentId : 'ยังไม่ได้เข้าสู่ระบบ'}
+            {isLoggedIn ? (profile?.email || profile?.studentId) : 'ยังไม่ได้เข้าสู่ระบบ'}
           </Text>
         </View>
 
@@ -37,7 +50,7 @@ export default function ProfileScreen({
             <Text style={{ fontSize: 11, color: '#5C3A21', fontWeight: 'bold' }}> แก้ไขโปรไฟล์</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.loginBtn} onPress={onLogin}>
+          <TouchableOpacity style={styles.loginBtn} onPress={() => navigation.navigate('Login')}>
             <Text style={{ fontSize: 11, color: '#FFF', fontWeight: 'bold' }}>เข้าสู่ระบบ</Text>
           </TouchableOpacity>
         )}
@@ -47,7 +60,7 @@ export default function ProfileScreen({
       <View style={styles.menuListContainer}>
         <TouchableOpacity
           style={styles.profileMenuItem}
-          onPress={isLoggedIn ? onGoToUserDetail : onLogin}
+          onPress={isLoggedIn ? onGoToUserDetail : () => navigation.navigate('Login')}
         >
           <Ionicons name="person-outline" size={20} color="#5C3A21" style={{ marginRight: 12 }} />
           <Text style={styles.menuItemText}>ข้อมูลผู้ใช้</Text>
@@ -77,14 +90,22 @@ export default function ProfileScreen({
         )}
       </View>
 
-      {/* 🟢 ปุ่มสีน้ำตาลสำหรับ เข้าสู่ระบบ / สมัครสมาชิก */}
-      {!isLoggedIn && (
+      {/* ปุ่มด้านล่าง: สลับระหว่าง เข้าสู่ระบบ กับ ออกจากระบบ ตามสถานะ */}
+      {!isLoggedIn ? (
         <TouchableOpacity
           style={styles.fullLoginBtn}
           onPress={() => navigation.navigate('Login')}
         >
           <Ionicons name="log-in-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
           <Text style={styles.fullLoginBtnText}>เข้าสู่ระบบ / สมัครสมาชิก</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.fullLogoutBtn}
+          onPress={handleLogout}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#E53935" style={{ marginRight: 8 }} />
+          <Text style={styles.fullLogoutBtnText}>ออกจากระบบ</Text>
         </TouchableOpacity>
       )}
     </ScrollView>
@@ -104,4 +125,6 @@ const styles = StyleSheet.create({
   menuItemText: { fontSize: 14, color: '#333', fontWeight: '600', flex: 1 },
   fullLoginBtn: { backgroundColor: '#5C4033', borderRadius: 16, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   fullLoginBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' },
+  fullLogoutBtn: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#FFCDD2', borderRadius: 16, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  fullLogoutBtnText: { color: '#E53935', fontSize: 15, fontWeight: 'bold' },
 });

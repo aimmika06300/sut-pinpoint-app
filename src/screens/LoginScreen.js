@@ -10,18 +10,64 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen({ navigation }) {
   const [screenMode, setScreenMode] = useState('welcome');
-  
+
   // State สำหรับ Form
-  const [username, setUsername] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // ฟังก์ชัน Sign In -> ส่งข้อมูลไปยังหน้า Main
+  const handleSignIn = () => {
+    Keyboard.dismiss();
+
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('แจ้งเตือน', 'กรุณากรอก Email และ Password ให้ครบถ้วน');
+      return;
+    }
+
+    if (navigation) {
+      const displayName = studentId.trim() || email.split('@')[0];
+
+      navigation.replace('Main', {
+        user: {
+          name: displayName,
+          studentId: studentId.trim() || 'B64xxxxx',
+          email: email.trim(),
+          isLoggedIn: true,
+        },
+      });
+    }
+  };
+
+  // ฟังก์ชัน Sign Up
+  const handleSignUp = () => {
+    Keyboard.dismiss();
+
+    if (!studentId.trim() || !email.trim() || !password || !confirmPassword) {
+      Alert.alert('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบทุกช่อง');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('ข้อผิดพลาด', 'รหัสผ่านทั้งสองช่องไม่ตรงกัน');
+      return;
+    }
+
+    Alert.alert('สำเร็จ', 'สมัครสมาชิกเรียบร้อยแล้ว กรุณาเข้าสู่ระบบ', [
+      {
+        text: 'ตกลง',
+        onPress: () => setScreenMode('signin'),
+      },
+    ]);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -107,7 +153,7 @@ export default function LoginScreen({ navigation }) {
                   </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.primaryDarkBtn}>
+                <TouchableOpacity style={styles.primaryDarkBtn} onPress={handleSignIn}>
                   <Text style={styles.primaryDarkBtnText}>Sign In</Text>
                 </TouchableOpacity>
 
@@ -122,7 +168,11 @@ export default function LoginScreen({ navigation }) {
 
             {screenMode === 'signup' && (
               /* ---------------- 3. หน้า Sign Up ---------------- */
-              <ScrollView showsVerticalScrollIndicator={false} style={styles.signInContent}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.signInContent}
+                keyboardShouldPersistTaps="handled"
+              >
                 <TouchableOpacity
                   style={styles.backCircleBtn}
                   onPress={() => setScreenMode('welcome')}
@@ -132,16 +182,16 @@ export default function LoginScreen({ navigation }) {
 
                 <Text style={styles.signInTitle}>Sign Up</Text>
 
-                {/* Username Input */}
+                {/* Student ID Input */}
                 <View style={styles.inputBox}>
-                  <Ionicons name="person-outline" size={20} color="#888" style={{ marginRight: 10 }} />
+                  <Ionicons name="card-outline" size={20} color="#888" style={{ marginRight: 10 }} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Username"
+                    placeholder="Student ID (เช่น B64xxxxx)"
                     placeholderTextColor="#A0A0A0"
-                    value={username}
-                    onChangeText={setUsername}
-                    autoCapitalize="none"
+                    value={studentId}
+                    onChangeText={setStudentId}
+                    autoCapitalize="characters"
                   />
                 </View>
 
@@ -192,7 +242,7 @@ export default function LoginScreen({ navigation }) {
                   />
                 </View>
 
-                <TouchableOpacity style={styles.primaryDarkBtn}>
+                <TouchableOpacity style={styles.primaryDarkBtn} onPress={handleSignUp}>
                   <Text style={styles.primaryDarkBtnText}>Sign Up</Text>
                 </TouchableOpacity>
 

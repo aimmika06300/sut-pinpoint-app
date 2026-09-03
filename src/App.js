@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, StatusBar, Platform, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
@@ -20,7 +20,7 @@ import { INITIAL_PROFILE, INITIAL_NOTIFICATIONS } from './data/mockData';
 const Stack = createNativeStackNavigator();
 
 // คอมโพเนนต์รวมสำหรับหน้าหลักพร้อม Bottom Navigation
-function MainTabs({ navigation }) {
+function MainTabs({ navigation, route }) {
   const [activeTab, setActiveTab] = useState('Home');
   const [currentProfileView, setCurrentProfileView] = useState('Main');
   
@@ -30,7 +30,19 @@ function MainTabs({ navigation }) {
   const [selectedDayIndex, setSelectedDayIndex] = useState(1);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
-  const [profile] = useState(INITIAL_PROFILE);
+  
+  // ให้ profile มี setter เพื่ออัปเดตข้อมูลผู้ใช้ที่ล็อกอินเข้ามา
+  const [profile, setProfile] = useState(INITIAL_PROFILE);
+
+  // ดักฟังว่ามี params user ส่งมาจาก LoginScreen หรือไม่
+  useEffect(() => {
+    if (route.params?.user) {
+      setProfile((prev) => ({
+        ...prev,
+        ...route.params.user,
+      }));
+    }
+  }, [route.params?.user]);
 
   // คำนวณจำนวนการแจ้งเตือนที่ยังไม่ได้อ่าน
   const unreadCount = notifications.filter((n) => n.unread).length;
@@ -146,12 +158,12 @@ function MainTabs({ navigation }) {
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+        {/* หน้า Login (ตั้งเป็นหน้าแรก) */}
+        <Stack.Screen name="Login" component={LoginScreen} />
+
         {/* หน้าหลักของแอป */}
         <Stack.Screen name="Main" component={MainTabs} />
-        
-        {/* หน้า Login */}
-        <Stack.Screen name="Login" component={LoginScreen} />
 
         {/* หน้าห้องเรียนทั้งหมด (อาคาร > ชั้น > ห้อง) */}
         <Stack.Screen name="AllClassrooms" component={AllClassroomsScreen} />
