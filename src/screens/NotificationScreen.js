@@ -1,14 +1,38 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Pressable, Alert, } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 
-export default function NotificationScreen({ notifications, setNotifications, profile, isLoggedIn = false, }) {
+export default function NotificationScreen({ notifications, setNotifications, profile, }) {
+
+  const isLoggedIn = profile?.isLoggedIn || false;
   const markAllAsRead = () => {
     setNotifications(notifications.map((n) => ({ ...n, unread: false })));
   };
 
   const deleteNotification = (id) => {
     setNotifications(notifications.filter((n) => n.id !== id));
+  };
+
+  const confirmDelete = (id) => {
+    Alert.alert(
+      'ยืนยันการลบ',
+      'คุณต้องการลบการแจ้งเตือนนี้หรือไม่?',
+      [
+        {
+          text: 'ยกเลิก',
+          style: 'cancel',
+        },
+        {
+          text: 'ยืนยัน',
+          style: 'destructive',
+          onPress: () => {
+            setNotifications(
+              notifications.filter((n) => n.id !== id)
+            );
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -39,7 +63,7 @@ export default function NotificationScreen({ notifications, setNotifications, pr
         <View key={n.id} style={[styles.notifCard, n.unread && styles.unreadNotifCard]}>
           <Pressable
             style={styles.deleteButton}
-            onPress={() => deleteNotification(n.id)}
+            onPress={() => confirmDelete(n.id)}
           >
             <Text style={styles.deleteButtonText}>-</Text>
           </Pressable>
