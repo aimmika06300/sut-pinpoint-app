@@ -2,7 +2,8 @@ import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-export default function HomeScreen({ onNavigateToMap, onOpenClassroom, onOpenAllClassrooms, searchQuery, setSearchQuery, onGoToProfile }) {
+export default function HomeScreen({ onNavigateToMap, onOpenClassroom, onOpenAllClassrooms, searchQuery, setSearchQuery, onGoToProfile , profile ,}) {
+  const isLoggedIn = profile?.isLoggedIn || false;
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       {/* Header Profile Card */}
@@ -12,8 +13,13 @@ export default function HomeScreen({ onNavigateToMap, onOpenClassroom, onOpenAll
             <FontAwesome name="user" size={32} color="#F28C4B" />
           </View>
           <View>
-            <Text style={styles.userName}>USER NAME</Text>
-            <Text style={styles.userId}>BXXXXXX</Text>
+          <Text style={styles.userName}>
+            {isLoggedIn ? profile?.name : 'ผู้ใช้งานทั่วไป'}
+          </Text>
+
+          <Text style={styles.userId}>
+            {isLoggedIn ? (profile?.email || profile?.studentId) : 'ยังไม่ได้เข้าสู่ระบบ'}
+          </Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.gearBtn} onPress={onGoToProfile}>

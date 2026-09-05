@@ -36,7 +36,7 @@ const INITIAL_SCHEDULE = [
 function MainTabs({ navigation, route }) {
   const [activeTab, setActiveTab] = useState('Home');
   const [currentProfileView, setCurrentProfileView] = useState('Main');
-  
+
   // App States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -47,7 +47,7 @@ function MainTabs({ navigation, route }) {
   // ✅ ย้าย scheduleList ขึ้นมาไว้ตรงนี้ (ระดับเดียวกับ notifications)
   // เพื่อไม่ให้ข้อมูลหายเวลาสลับ tab ไปมา (เพราะ ClassroomScreen ถูก unmount/remount ทุกครั้งที่เปลี่ยนแท็บ)
   const [scheduleList, setScheduleList] = useState(INITIAL_SCHEDULE);
-  
+
   // ให้ profile มี setter เพื่ออัปเดตข้อมูลผู้ใช้ที่ล็อกอินเข้ามา
   const [profile, setProfile] = useState(INITIAL_PROFILE);
 
@@ -60,6 +60,15 @@ function MainTabs({ navigation, route }) {
       }));
     }
   }, [route.params?.user]);
+
+  useEffect(() => {
+    if (route.params?.notification) {
+      setNotifications((prev) => [
+        route.params.notification,
+        ...prev,
+      ]);
+    }
+  }, [route.params?.notification]);
 
   // คำนวณจำนวนการแจ้งเตือนที่ยังไม่ได้อ่าน
   const unreadCount = notifications.filter((n) => n.unread).length;
@@ -85,6 +94,7 @@ function MainTabs({ navigation, route }) {
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             onGoToProfile={() => setActiveTab('Profile')}
+            profile={profile}
           />
         );
 
@@ -115,6 +125,7 @@ function MainTabs({ navigation, route }) {
           <NotificationScreen
             notifications={notifications}
             setNotifications={setNotifications}
+            profile={profile}
           />
         );
 

@@ -92,6 +92,13 @@ export default function LoginScreen({ navigation }) {
           email: firebaseUser.email,
           isLoggedIn: true,
         },
+        notification: {
+          id: Date.now().toString(),
+          title: 'เข้าสู่ระบบสำเร็จ',
+          body: 'ยินดีต้อนรับเข้าสู่ระบบ',
+          time: 'เมื่อสักครู่',
+          unread: true,
+        },
       });
 
     } catch (error) {
