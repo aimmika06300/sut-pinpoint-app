@@ -19,7 +19,7 @@ import { INITIAL_PROFILE, INITIAL_NOTIFICATIONS } from './data/mockData';
 
 const Stack = createNativeStackNavigator();
 
-// ข้อมูลตารางเรียนเริ่มต้น (ย้ายมาไว้ที่นี่เพื่อให้ไม่หายเวลาสลับแท็บ)
+// ข้อมูลตารางเรียนเริ่มต้น
 const INITIAL_SCHEDULE = [
   {
     id: '1',
@@ -44,11 +44,9 @@ function MainTabs({ navigation, route }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
-  // ✅ ย้าย scheduleList ขึ้นมาไว้ตรงนี้ (ระดับเดียวกับ notifications)
-  // เพื่อไม่ให้ข้อมูลหายเวลาสลับ tab ไปมา (เพราะ ClassroomScreen ถูก unmount/remount ทุกครั้งที่เปลี่ยนแท็บ)
   const [scheduleList, setScheduleList] = useState(INITIAL_SCHEDULE);
 
-  // ให้ profile มี setter เพื่ออัปเดตข้อมูลผู้ใช้ที่ล็อกอินเข้ามา
+
   const [profile, setProfile] = useState(INITIAL_PROFILE);
 
   // ดักฟังว่ามี params user ส่งมาจาก LoginScreen หรือไม่
@@ -78,7 +76,6 @@ function MainTabs({ navigation, route }) {
     setSearchQuery(buildingName || '');
   };
 
-  // ✅ ฟังก์ชันกลางสำหรับเพิ่มการแจ้งเตือน ใช้ได้จากทุกหน้าจอลูก
   const addNotification = (notif) => {
     setNotifications((prev) => [notif, ...prev]);
   };
@@ -117,6 +114,7 @@ function MainTabs({ navigation, route }) {
             setSearchQuery={setSearchQuery}
             selectedFilter={selectedFilter}
             setSelectedFilter={setSelectedFilter}
+            onBackToHome={() => setActiveTab('Home')} // ✅ เปลี่ยน activeTab กลับเป็น 'Home' เมื่อกดปุ่มย้อนกลับ
           />
         );
 
@@ -152,6 +150,8 @@ function MainTabs({ navigation, route }) {
     }
   };
 
+  const isHomeActive = activeTab === 'Home' || activeTab === 'Map';
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F4E9" />
@@ -164,16 +164,28 @@ function MainTabs({ navigation, route }) {
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Home')}>
-          <Ionicons name={activeTab === 'Home' ? 'home' : 'home-outline'} size={24} color={activeTab === 'Home' ? '#5C3A21' : '#888'} />
+          <Ionicons 
+            name={isHomeActive ? 'home-sharp' : 'home-outline'} 
+            size={24} 
+            color={isHomeActive ? '#5C3A21' : '#888'} 
+          />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Classroom')}>
-          <Ionicons name={activeTab === 'Classroom' ? 'book' : 'book-outline'} size={24} color={activeTab === 'Classroom' ? '#5C3A21' : '#888'} />
+          <Ionicons 
+            name={activeTab === 'Classroom' ? 'book' : 'book-outline'} 
+            size={24} 
+            color={activeTab === 'Classroom' ? '#5C3A21' : '#888'} 
+          />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Notif')}>
           <View>
-            <Ionicons name={activeTab === 'Notif' ? 'notifications' : 'notifications-outline'} size={24} color={activeTab === 'Notif' ? '#5C3A21' : '#888'} />
+            <Ionicons 
+              name={activeTab === 'Notif' ? 'notifications' : 'notifications-outline'} 
+              size={24} 
+              color={activeTab === 'Notif' ? '#5C3A21' : '#888'} 
+            />
             {unreadCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{unreadCount}</Text>
@@ -183,7 +195,11 @@ function MainTabs({ navigation, route }) {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem} onPress={() => { setActiveTab('Profile'); setCurrentProfileView('Main'); }}>
-          <Ionicons name={activeTab === 'Profile' ? 'person' : 'person-outline'} size={24} color={activeTab === 'Profile' ? '#5C3A21' : '#888'} />
+          <Ionicons 
+            name={activeTab === 'Profile' ? 'person' : 'person-outline'} 
+            size={24} 
+            color={activeTab === 'Profile' ? '#5C3A21' : '#888'} 
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -195,13 +211,13 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-        {/* หน้า Login (ตั้งเป็นหน้าแรก) */}
+        {/* หน้า Login */}
         <Stack.Screen name="Login" component={LoginScreen} />
 
         {/* หน้าหลักของแอป */}
         <Stack.Screen name="Main" component={MainTabs} />
 
-        {/* หน้าห้องเรียนทั้งหมด (อาคาร > ชั้น > ห้อง) */}
+        {/* หน้าห้องเรียนทั้งหมด */}
         <Stack.Screen name="AllClassrooms" component={AllClassroomsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
