@@ -9,10 +9,6 @@ export default function NotificationScreen({ notifications, setNotifications, pr
     setNotifications(notifications.map((n) => ({ ...n, unread: false })));
   };
 
-  const deleteNotification = (id) => {
-    setNotifications(notifications.filter((n) => n.id !== id));
-  };
-
   const confirmDelete = (id) => {
     Alert.alert(
       'ยืนยันการลบ',
