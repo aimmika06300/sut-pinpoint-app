@@ -8,11 +8,16 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  TextInput,
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { fetchBuildings, fetchRooms } from '../services/api';
 import { groupRoomsByBuilding } from '../utils/groupRooms';
+import { db } from '../firebaseConfig';
+import {
+  collection,
+  getDocs,
+} from 'firebase/firestore';
 
 export default function AllClassroomsScreen({ navigation }) {
   const [buildings, setBuildings] = useState([]);
@@ -22,26 +27,55 @@ export default function AllClassroomsScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [expandedBuildings, setExpandedBuildings] = useState({});
   const [expandedFloors, setExpandedFloors] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = useCallback(async () => {
     try {
       setError(null);
-      const [buildingsData, roomsData] = await Promise.all([
-        fetchBuildings(),
-        fetchRooms(),
-      ]);
+
+      // โหลด Buildings จาก Firebase
+      const buildingsSnapshot = await getDocs(
+        collection(db, 'buildings')
+      );
+
+      const buildingsData = buildingsSnapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+
+      // โหลด Classrooms จาก Firebase
+      const classroomsSnapshot = await getDocs(
+        collection(db, 'classrooms')
+      );
+
+      const roomsData = classroomsSnapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+
       setBuildings(buildingsData);
       setRooms(roomsData);
 
-      // เปิดอาคารแรกไว้อัตโนมัติ (ให้ความรู้สึกเหมือนดีไซน์ต้นแบบ)
+      // เปิดอาคารแรกอัตโนมัติ
       setExpandedBuildings((prev) => {
-        if (Object.keys(prev).length > 0 || buildingsData.length === 0) {
+        if (
+          Object.keys(prev).length > 0 ||
+          buildingsData.length === 0
+        ) {
           return prev;
         }
-        return { [buildingsData[0].name]: true };
+
+        return {
+          [buildingsData[0].name]: true,
+        };
       });
+
     } catch (err) {
-      setError(err.message || 'โหลดข้อมูลไม่สำเร็จ');
+      console.log('Load locations error:', err);
+
+      setError(
+        err.message || 'โหลดข้อมูลอาคารและห้องเรียนไม่สำเร็จ'
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -64,6 +98,39 @@ export default function AllClassroomsScreen({ navigation }) {
   const toggleFloor = (key) => {
     setExpandedFloors((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+  const query = searchQuery.trim().toLowerCase();
+
+  const filteredRooms = rooms.filter((room) => {
+    if (!query) return true;
+
+    const roomNumber = String(room.id || '').toLowerCase();
+    const buildingName = String(room.building_name || '').toLowerCase();
+
+    return (
+      roomNumber.includes(query) ||
+      buildingName.includes(query)
+    );
+  });
+
+  const filteredBuildings = buildings.filter((building) => {
+    if (!query) return true;
+
+    const buildingName = String(building.name || '').toLowerCase();
+
+    const hasMatchingRoom = filteredRooms.some(
+      (room) => room.building_name === building.name
+    );
+
+    return (
+      buildingName.includes(query) ||
+      hasMatchingRoom
+    );
+  });
+
+  const groupedBuildings = groupRoomsByBuilding(
+    filteredBuildings,
+    filteredRooms
+  );
 
   if (loading) {
     return (
@@ -96,8 +163,6 @@ export default function AllClassroomsScreen({ navigation }) {
     );
   }
 
-  const groupedBuildings = groupRoomsByBuilding(buildings, rooms);
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerBar}>
@@ -111,6 +176,23 @@ export default function AllClassroomsScreen({ navigation }) {
         <Text style={styles.headerTitle}>ห้องเรียนทั้งหมด</Text>
       </View>
 
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#777" />
+
+        <TextInput
+          style={styles.searchInput}
+          placeholder="ค้นหาชื่ออาคาร หรือเลขห้อง..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={20} color="#999" />
+          </TouchableOpacity>
+        )}
+      </View>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -370,4 +452,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: BROWN,
   },
+  searchContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    paddingHorizontal: 12,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5DED4',
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 8,
+  },
 });
+
