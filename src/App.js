@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, StatusBar, Platform, TouchableOpacity, Text } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  StatusBar,
+  Platform,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import {
+  NavigationContainer,
+} from '@react-navigation/native';
+
+import {
+  createNativeStackNavigator,
+} from '@react-navigation/native-stack';
 
 // Import Screens
 import HomeScreen from './screens/HomeScreen';
@@ -13,9 +27,13 @@ import ProfileScreen from './screens/ProfileScreen';
 import UserDetailScreen from './screens/UserDetailScreen';
 import LoginScreen from './screens/LoginScreen';
 import AllClassroomsScreen from './screens/AllClassroomsScreen';
+import Scanner from './screens/Scanner';
 
 // Import Mock Data
-import { INITIAL_PROFILE, INITIAL_NOTIFICATIONS } from './data/mockData';
+import {
+  INITIAL_PROFILE,
+  INITIAL_NOTIFICATIONS,
+} from './data/mockData';
 
 const Stack = createNativeStackNavigator();
 
@@ -46,7 +64,6 @@ function MainTabs({ navigation, route }) {
 
   const [scheduleList, setScheduleList] = useState(INITIAL_SCHEDULE);
 
-
   const [profile, setProfile] = useState(INITIAL_PROFILE);
 
   // ดักฟังว่ามี params user ส่งมาจาก LoginScreen หรือไม่
@@ -59,6 +76,7 @@ function MainTabs({ navigation, route }) {
     }
   }, [route.params?.user]);
 
+  // ดักฟัง notification ที่ส่งมาจากหน้าอื่น
   useEffect(() => {
     if (route.params?.notification) {
       setNotifications((prev) => [
@@ -69,32 +87,63 @@ function MainTabs({ navigation, route }) {
   }, [route.params?.notification]);
 
   // คำนวณจำนวนการแจ้งเตือนที่ยังไม่ได้อ่าน
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  const unreadCount = notifications.filter(
+    (n) => n.unread
+  ).length;
 
+  // ไปหน้า Map
   const navigateToMap = (buildingName) => {
     setActiveTab('Map');
     setSearchQuery(buildingName || '');
   };
 
+  // ไปหน้า Scanner
+  const navigateToScanner = () => {
+    setActiveTab('Scanner');
+  };
+
+  // กลับจาก Scanner ไป Home
+  const backToHome = () => {
+    setActiveTab('Home');
+  };
+
+  // เพิ่ม Notification
   const addNotification = (notif) => {
-    setNotifications((prev) => [notif, ...prev]);
+    setNotifications((prev) => [
+      notif,
+      ...prev,
+    ]);
   };
 
   const renderScreen = () => {
     switch (activeTab) {
+
+      // =========================
+      // HOME
+      // =========================
       case 'Home':
         return (
           <HomeScreen
             onNavigateToMap={navigateToMap}
-            onOpenClassroom={() => setActiveTab('Classroom')}
-            onOpenAllClassrooms={() => navigation.navigate('AllClassrooms')}
+            onOpenClassroom={() =>
+              setActiveTab('Classroom')
+            }
+            onOpenAllClassrooms={() =>
+              navigation.navigate('AllClassrooms')
+            }
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            onGoToProfile={() => setActiveTab('Profile')}
+            onGoToProfile={() =>
+              setActiveTab('Profile')
+            }
             profile={profile}
+            onGoToScanner={navigateToScanner}
           />
         );
 
+      // =========================
+      // CLASSROOM
+      // =========================
       case 'Classroom':
         return (
           <ClassroomScreen
@@ -107,6 +156,9 @@ function MainTabs({ navigation, route }) {
           />
         );
 
+      // =========================
+      // MAP
+      // =========================
       case 'Map':
         return (
           <MapScreen
@@ -114,10 +166,15 @@ function MainTabs({ navigation, route }) {
             setSearchQuery={setSearchQuery}
             selectedFilter={selectedFilter}
             setSelectedFilter={setSelectedFilter}
-            onBackToHome={() => setActiveTab('Home')} // ✅ เปลี่ยน activeTab กลับเป็น 'Home' เมื่อกดปุ่มย้อนกลับ
+            onBackToHome={() =>
+              setActiveTab('Home')
+            }
           />
         );
 
+      // =========================
+      // NOTIFICATION
+      // =========================
       case 'Notif':
         return (
           <NotificationScreen
@@ -127,21 +184,46 @@ function MainTabs({ navigation, route }) {
           />
         );
 
+      // =========================
+      // PROFILE
+      // =========================
       case 'Profile':
         return currentProfileView === 'UserDetail' ? (
           <UserDetailScreen
             profile={profile}
-            onBack={() => setCurrentProfileView('Main')}
+            onBack={() =>
+              setCurrentProfileView('Main')
+            }
           />
         ) : (
           <ProfileScreen
             navigation={navigation}
             profile={profile}
-            notificationsEnabled={notificationsEnabled}
-            setNotificationsEnabled={setNotificationsEnabled}
-            onGoToUserDetail={() => setCurrentProfileView('UserDetail')}
-            onGoToTimetable={() => setActiveTab('Classroom')}
-            onLogin={() => navigation.navigate('Login')}
+            notificationsEnabled={
+              notificationsEnabled
+            }
+            setNotificationsEnabled={
+              setNotificationsEnabled
+            }
+            onGoToUserDetail={() =>
+              setCurrentProfileView('UserDetail')
+            }
+            onGoToTimetable={() =>
+              setActiveTab('Classroom')
+            }
+            onLogin={() =>
+              navigation.navigate('Login')
+            }
+          />
+        );
+
+      // =========================
+      // SCANNER
+      // =========================
+      case 'Scanner':
+        return (
+          <Scanner
+            onBack={backToHome}
           />
         );
 
@@ -150,11 +232,18 @@ function MainTabs({ navigation, route }) {
     }
   };
 
-  const isHomeActive = activeTab === 'Home' || activeTab === 'Map';
+  // ให้ Home และ Map ใช้ไอคอน Home เป็นสถานะ Active
+  const isHomeActive =
+    activeTab === 'Home' ||
+    activeTab === 'Map';
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F4E9" />
+
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#F8F4E9"
+      />
 
       {/* Dynamic Screen Content */}
       <View style={styles.contentContainer}>
@@ -162,46 +251,110 @@ function MainTabs({ navigation, route }) {
       </View>
 
       {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Home')}>
-          <Ionicons 
-            name={isHomeActive ? 'home-sharp' : 'home-outline'} 
-            size={24} 
-            color={isHomeActive ? '#5C3A21' : '#888'} 
-          />
-        </TouchableOpacity>
+      {activeTab !== 'Scanner' && (
+        <View style={styles.bottomNav}>
 
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Classroom')}>
-          <Ionicons 
-            name={activeTab === 'Classroom' ? 'book' : 'book-outline'} 
-            size={24} 
-            color={activeTab === 'Classroom' ? '#5C3A21' : '#888'} 
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Notif')}>
-          <View>
-            <Ionicons 
-              name={activeTab === 'Notif' ? 'notifications' : 'notifications-outline'} 
-              size={24} 
-              color={activeTab === 'Notif' ? '#5C3A21' : '#888'} 
+          {/* Home */}
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() =>
+              setActiveTab('Home')
+            }
+          >
+            <Ionicons
+              name={
+                isHomeActive
+                  ? 'home-sharp'
+                  : 'home-outline'
+              }
+              size={24}
+              color={
+                isHomeActive
+                  ? '#5C3A21'
+                  : '#888'
+              }
             />
-            {unreadCount > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadCount}</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navItem} onPress={() => { setActiveTab('Profile'); setCurrentProfileView('Main'); }}>
-          <Ionicons 
-            name={activeTab === 'Profile' ? 'person' : 'person-outline'} 
-            size={24} 
-            color={activeTab === 'Profile' ? '#5C3A21' : '#888'} 
-          />
-        </TouchableOpacity>
-      </View>
+          {/* Classroom */}
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() =>
+              setActiveTab('Classroom')
+            }
+          >
+            <Ionicons
+              name={
+                activeTab === 'Classroom'
+                  ? 'book'
+                  : 'book-outline'
+              }
+              size={24}
+              color={
+                activeTab === 'Classroom'
+                  ? '#5C3A21'
+                  : '#888'
+              }
+            />
+          </TouchableOpacity>
+
+          {/* Notification */}
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() =>
+              setActiveTab('Notif')
+            }
+          >
+            <View>
+              <Ionicons
+                name={
+                  activeTab === 'Notif'
+                    ? 'notifications'
+                    : 'notifications-outline'
+                }
+                size={24}
+                color={
+                  activeTab === 'Notif'
+                    ? '#5C3A21'
+                    : '#888'
+                }
+              />
+
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          {/* Profile */}
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => {
+              setActiveTab('Profile');
+              setCurrentProfileView('Main');
+            }}
+          >
+            <Ionicons
+              name={
+                activeTab === 'Profile'
+                  ? 'person'
+                  : 'person-outline'
+              }
+              size={24}
+              color={
+                activeTab === 'Profile'
+                  ? '#5C3A21'
+                  : '#888'
+              }
+            />
+          </TouchableOpacity>
+
+        </View>
+      )}
     </View>
   );
 }
@@ -210,15 +363,31 @@ function MainTabs({ navigation, route }) {
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+
         {/* หน้า Login */}
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+        />
 
         {/* หน้าหลักของแอป */}
-        <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen
+          name="Main"
+          component={MainTabs}
+        />
 
         {/* หน้าห้องเรียนทั้งหมด */}
-        <Stack.Screen name="AllClassrooms" component={AllClassroomsScreen} />
+        <Stack.Screen
+          name="AllClassrooms"
+          component={AllClassroomsScreen}
+        />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -228,11 +397,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F4E9',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 40,
+    paddingTop:
+      Platform.OS === 'android'
+        ? StatusBar.currentHeight
+        : 40,
   },
+
   contentContainer: {
     flex: 1,
   },
+
   bottomNav: {
     height: 65,
     backgroundColor: '#FFF',
@@ -243,15 +417,20 @@ const styles = StyleSheet.create({
     borderTopColor: '#EEE',
     elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+
   navItem: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 8,
   },
+
   badge: {
     position: 'absolute',
     top: -4,
@@ -263,6 +442,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   badgeText: {
     color: '#FFF',
     fontSize: 9,
