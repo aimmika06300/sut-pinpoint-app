@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
     Alert,
+    Linking,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -16,7 +17,7 @@ export default function Scanner({ onBack }) {
     const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
 
-    // ยังตรวจสอบ permission อยู่
+    // ยังโหลด permission ไม่เสร็จ
     if (!permission) {
         return (
             <View style={styles.container} />
@@ -52,22 +53,78 @@ export default function Scanner({ onBack }) {
         );
     }
 
-    // ถ้ากล้องเปิดไม่ได้
-    const handleCameraError = (error) => {
-        console.log('CAMERA ERROR:', error);
-
-        Alert.alert(
-            'Camera Error',
-            error?.message || 'ไม่สามารถเปิดกล้องได้'
-        );
-    };
-
-    // เมื่อสแกน QR
-    const handleBarcodeScanned = ({ data }) => {
-        if (scanned) return;
+    // เมื่อพบ QR Code
+    const handleBarcodeScanned = async ({ data }) => {
+        // ป้องกันการอ่าน QR ซ้ำหลายครั้ง
+        if (scanned) {
+            return;
+        }
 
         setScanned(true);
 
+        console.log('QR CODE:', data);
+
+        // ==========================================
+        // ถ้า QR เป็น URL ให้เปิดเว็บไซต์ทันที
+        // ==========================================
+        if (
+            data.startsWith('http://') ||
+            data.startsWith('https://')
+        ) {
+            try {
+                const supported = await Linking.canOpenURL(data);
+
+                if (supported) {
+                    console.log('OPEN URL:', data);
+
+                    await Linking.openURL(data);
+
+                    // เปิดเว็บแล้ว กลับมา Scanner
+                    // สามารถสแกน QR ใหม่ได้
+                    setTimeout(() => {
+                        setScanned(false);
+                    }, 1000);
+                } else {
+                    Alert.alert(
+                        'ไม่สามารถเปิดเว็บไซต์ได้',
+                        data,
+                        [
+                            {
+                                text: 'ตกลง',
+                                onPress: () => {
+                                    setScanned(false);
+                                },
+                            },
+                        ]
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    'OPEN URL ERROR:',
+                    error
+                );
+
+                Alert.alert(
+                    'เกิดข้อผิดพลาด',
+                    'ไม่สามารถเปิดเว็บไซต์นี้ได้',
+                    [
+                        {
+                            text: 'ตกลง',
+                            onPress: () => {
+                                setScanned(false);
+                            },
+                        },
+                    ]
+                );
+            }
+
+            return;
+        }
+
+        // ==========================================
+        // ถ้า QR ไม่ใช่ URL
+        // ให้แสดงข้อมูลที่ QR เก็บไว้
+        // ==========================================
         Alert.alert(
             'QR Code',
             data,
@@ -85,43 +142,64 @@ export default function Scanner({ onBack }) {
     return (
         <View style={styles.container}>
 
-            {/* กล้อง */}
+            {/* =========================
+                CAMERA
+            ========================== */}
             <CameraView
-                style={StyleSheet.absoluteFillObject}
-                facing="back"
-                active={true}
-                onMountError={(error) => {
-                    console.log('CAMERA ERROR:', error);
+                style={styles.camera}
+                facing="front"
 
-                    Alert.alert(
-                        'Camera Error',
-                        error?.message || 'เปิดกล้องไม่ได้'
+                onCameraReady={() => {
+                    console.log('CAMERA READY');
+                }}
+
+                onMountError={(error) => {
+                    console.log(
+                        'CAMERA MOUNT ERROR:',
+                        error
                     );
+                }}
+
+                onBarcodeScanned={
+                    scanned
+                        ? undefined
+                        : handleBarcodeScanned
+                }
+
+                barcodeScannerSettings={{
+                    barcodeTypes: ['qr'],
                 }}
             />
 
-            {/* ปุ่มกลับ */}
-            <TouchableOpacity
-                style={styles.backButtonTop}
-                onPress={onBack}
-            >
-                <Text style={styles.backText}>
-                    ‹
-                </Text>
-            </TouchableOpacity>
+            {/* =========================
+                TOP BAR
+            ========================== */}
+            <View style={styles.topBar}>
 
-            {/* ข้อความด้านบน */}
-            <View style={styles.titleContainer}>
-                <Text style={styles.title}>
-                    Scan QR Code
-                </Text>
+                <TouchableOpacity
+                    style={styles.backButtonTop}
+                    onPress={onBack}
+                >
+                    <Text style={styles.backText}>
+                        ‹
+                    </Text>
+                </TouchableOpacity>
 
-                <Text style={styles.subtitle}>
-                    สแกน QR Code เพื่อดูข้อมูลสถานที่
-                </Text>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.title}>
+                        Scan QR Code
+                    </Text>
+
+                    <Text style={styles.subtitle}>
+                        สแกน QR Code เพื่อเปิดเว็บไซต์
+                    </Text>
+                </View>
+
             </View>
 
-            {/* กรอบสแกน */}
+            {/* =========================
+                SCAN BOX
+            ========================== */}
             <View style={styles.scanBox}>
 
                 <View style={styles.cornerTopLeft} />
@@ -134,15 +212,43 @@ export default function Scanner({ onBack }) {
 
             </View>
 
+            {/* =========================
+                BOTTOM INFORMATION
+            ========================== */}
+            <View style={styles.bottomContainer}>
+
+                <Text style={styles.scanText}>
+                    วาง QR Code ให้อยู่ในกรอบ
+                </Text>
+
+                <Text style={styles.scanSubText}>
+                    ระบบจะสแกนและเปิดเว็บไซต์ให้อัตโนมัติ
+                </Text>
+
+            </View>
+
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+
+    // =========================
+    // MAIN
+    // =========================
+
     container: {
         flex: 1,
         backgroundColor: '#000',
     },
+
+    camera: {
+        flex: 1,
+    },
+
+    // =========================
+    // PERMISSION
+    // =========================
 
     permissionContainer: {
         flex: 1,
@@ -180,17 +286,33 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 
+    // =========================
+    // TOP BAR
+    // =========================
+
+    topBar: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 100,
+        zIndex: 10,
+    },
+
     backButtonTop: {
         position: 'absolute',
         top: 20,
         left: 20,
+
         width: 45,
         height: 45,
+
         borderRadius: 23,
+
         backgroundColor: 'rgba(0,0,0,0.6)',
+
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 10,
     },
 
     backText: {
@@ -200,12 +322,11 @@ const styles = StyleSheet.create({
     },
 
     titleContainer: {
-        position: 'absolute',
-        top: 30,
-        left: 80,
-        right: 20,
+        marginTop: 20,
+        marginLeft: 80,
+        marginRight: 20,
+
         alignItems: 'center',
-        zIndex: 5,
     },
 
     title: {
@@ -218,60 +339,128 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 12,
         marginTop: 5,
+        textAlign: 'center',
     },
+
+    // =========================
+    // SCAN BOX
+    // =========================
 
     scanBox: {
         position: 'absolute',
+
         width: 250,
         height: 250,
+
         left: '50%',
         top: '50%',
+
         marginLeft: -125,
         marginTop: -125,
+
         zIndex: 5,
     },
 
     cornerTopLeft: {
         position: 'absolute',
+
         top: 0,
         left: 0,
+
         width: 40,
         height: 40,
+
         borderTopWidth: 4,
         borderLeftWidth: 4,
+
         borderColor: '#FFF',
     },
 
     cornerTopRight: {
         position: 'absolute',
+
         top: 0,
         right: 0,
+
         width: 40,
         height: 40,
+
         borderTopWidth: 4,
         borderRightWidth: 4,
+
         borderColor: '#FFF',
     },
 
     cornerBottomLeft: {
         position: 'absolute',
+
         bottom: 0,
         left: 0,
+
         width: 40,
         height: 40,
+
         borderBottomWidth: 4,
         borderLeftWidth: 4,
+
         borderColor: '#FFF',
     },
 
     cornerBottomRight: {
         position: 'absolute',
+
         bottom: 0,
         right: 0,
+
         width: 40,
         height: 40,
+
         borderBottomWidth: 4,
         borderRightWidth: 4,
+
         borderColor: '#FFF',
     },
+
+    // =========================
+    // BOTTOM
+    // =========================
+
+    bottomContainer: {
+        position: 'absolute',
+
+        left: 0,
+        right: 0,
+        bottom: 60,
+
+        alignItems: 'center',
+
+        zIndex: 10,
+    },
+
+    scanText: {
+        color: '#FFF',
+        fontSize: 17,
+        fontWeight: 'bold',
+
+        textShadowColor: 'rgba(0,0,0,0.8)',
+        textShadowOffset: {
+            width: 1,
+            height: 1,
+        },
+        textShadowRadius: 3,
+    },
+
+    scanSubText: {
+        color: '#FFF',
+        fontSize: 13,
+        marginTop: 6,
+
+        textShadowColor: 'rgba(0,0,0,0.8)',
+        textShadowOffset: {
+            width: 1,
+            height: 1,
+        },
+        textShadowRadius: 3,
+    },
+
 });
